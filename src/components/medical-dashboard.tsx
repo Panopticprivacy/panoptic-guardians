@@ -16,6 +16,7 @@ import {
   ScanLine,
   ClipboardCheck,
   FileCode2,
+  Info,
 } from "lucide-react";
 import { MedicalCard } from '@/components/ui/medical-card';
 import { MedicalBadge } from '@/components/ui/medical-badge';
@@ -23,6 +24,8 @@ import { MedicalButton } from '@/components/ui/medical-button';
 import { MedicalToggle } from '@/components/ui/medical-toggle';
 import { MedicalInput } from '@/components/ui/medical-input';
 import { MedicalSelect } from '@/components/ui/medical-select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 
 // Demo data & helpers
 const connectorCatalog = [
@@ -43,6 +46,17 @@ const defaultPolicies = {
   egressBlock: true,
   promptLogging: false,
   retentionDays: 30,
+};
+
+const getToolDescription = (toolKey: string): string => {
+  const descriptions: Record<string, string> = {
+    icd10_lookup: "Lookup and validate ICD-10 diagnosis codes with detailed descriptions and usage guidelines",
+    cpt_validator: "Validate CPT procedure codes and check for proper billing combinations and modifiers",
+    claim_scrubber: "Apply NCCI edits and payer-specific rules to clean claims before submission",
+    phi_redactor: "Automatically detect and redact protected health information from clinical notes",
+    payer_rules: "Access comprehensive payer-specific coding guidelines and requirements from CMS and private insurers"
+  };
+  return descriptions[toolKey] || "Tool description not available";
 };
 
 const applyPreset = (preset: string, setAgent: any, setPolicies: any) => {
@@ -203,6 +217,9 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
         {/* Sidebar */}
         <aside className="col-span-12 lg:col-span-3 space-y-3">
           <MedicalCard title="Environment" icon={ServerCog}>
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip content="Select the deployment environment. Production has stricter security controls and compliance requirements." />
+            </div>
             <MedicalSelect
               label="Target"
               value={env}
@@ -220,62 +237,92 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
           </MedicalCard>
 
           <MedicalCard title="Compliance Guardrails" icon={Lock}>
-            <MedicalToggle 
-              checked={policies.hipaa} 
-              onChange={(v) => setPolicies(p => ({ ...p, hipaa: v }))} 
-              label="HIPAA" 
-              hint="PHI access controls & BAA" 
-            />
-            <MedicalToggle 
-              checked={policies.hitrust} 
-              onChange={(v) => setPolicies(p => ({ ...p, hitrust: v }))} 
-              label="HITRUST" 
-              hint="Operational controls mapping" 
-            />
-            <MedicalToggle 
-              checked={policies.gdpr} 
-              onChange={(v) => setPolicies(p => ({ ...p, gdpr: v }))} 
-              label="GDPR" 
-              hint="Lawful basis, DSR, DPO logs" 
-            />
-            <MedicalToggle 
-              checked={policies.ccpa} 
-              onChange={(v) => setPolicies(p => ({ ...p, ccpa: v }))} 
-              label="CCPA/CPRA" 
-              hint="Opt-out, sensitive categories" 
-            />
-            <div className="border-t my-2" />
-            <MedicalToggle 
-              checked={policies.phiMasking} 
-              onChange={(v) => setPolicies(p => ({ ...p, phiMasking: v }))} 
-              label="PHI masking" 
-              hint="Named entity redaction" 
-            />
-            <MedicalToggle 
-              checked={policies.piiScan} 
-              onChange={(v) => setPolicies(p => ({ ...p, piiScan: v }))} 
-              label="PII scanner" 
-              hint="Inline detectors pre/post model" 
-            />
-            <MedicalToggle 
-              checked={policies.egressBlock} 
-              onChange={(v) => setPolicies(p => ({ ...p, egressBlock: v }))} 
-              label="Block external egress" 
-              hint="No Internet in prod" 
-            />
-            <MedicalToggle 
-              checked={policies.promptLogging} 
-              onChange={(v) => setPolicies(p => ({ ...p, promptLogging: v }))} 
-              label="Prompt/body logging" 
-              hint="Disable to avoid PHI log storage" 
-            />
-            <div className="grid grid-cols-2 items-end gap-2 mt-2">
-              <MedicalInput 
-                label="Retention (days)" 
-                type="number" 
-                value={policies.retentionDays} 
-                onChange={(v) => setPolicies(p => ({ ...p, retentionDays: Number(v) }))} 
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip content="Configure regulatory compliance controls. These settings determine which privacy and security frameworks are applied to your AI agent." />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.hipaa} 
+                onChange={(v) => setPolicies(p => ({ ...p, hipaa: v }))} 
+                label="HIPAA" 
+                hint="PHI access controls & BAA" 
               />
+              <InfoTooltip content="Health Insurance Portability and Accountability Act - ensures proper handling of protected health information (PHI)" />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.hitrust} 
+                onChange={(v) => setPolicies(p => ({ ...p, hitrust: v }))} 
+                label="HITRUST" 
+                hint="Operational controls mapping" 
+              />
+              <InfoTooltip content="HITRUST CSF framework provides comprehensive security controls for healthcare organizations" />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.gdpr} 
+                onChange={(v) => setPolicies(p => ({ ...p, gdpr: v }))} 
+                label="GDPR" 
+                hint="Lawful basis, DSR, DPO logs" 
+              />
+              <InfoTooltip content="General Data Protection Regulation - European privacy law for personal data protection" />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.ccpa} 
+                onChange={(v) => setPolicies(p => ({ ...p, ccpa: v }))} 
+                label="CCPA/CPRA" 
+                hint="Opt-out, sensitive categories" 
+              />
+              <InfoTooltip content="California Consumer Privacy Act - provides privacy rights for California residents" />
+            </div>
+            <div className="border-t my-2" />
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.phiMasking} 
+                onChange={(v) => setPolicies(p => ({ ...p, phiMasking: v }))} 
+                label="PHI masking" 
+                hint="Named entity redaction" 
+              />
+              <InfoTooltip content="Automatically redact protected health information before sending data to AI models" />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.piiScan} 
+                onChange={(v) => setPolicies(p => ({ ...p, piiScan: v }))} 
+                label="PII scanner" 
+                hint="Inline detectors pre/post model" 
+              />
+              <InfoTooltip content="Scan for personally identifiable information in inputs and outputs to prevent data leaks" />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.egressBlock} 
+                onChange={(v) => setPolicies(p => ({ ...p, egressBlock: v }))} 
+                label="Block external egress" 
+                hint="No Internet in prod" 
+              />
+              <InfoTooltip content="Prevent the AI agent from making external network calls, ensuring data stays within your infrastructure" />
+            </div>
+            <div className="flex items-center justify-between">
+              <MedicalToggle 
+                checked={policies.promptLogging} 
+                onChange={(v) => setPolicies(p => ({ ...p, promptLogging: v }))} 
+                label="Prompt/body logging" 
+                hint="Disable to avoid PHI log storage" 
+              />
+              <InfoTooltip content="Enable or disable logging of AI prompts and responses - disable for sensitive PHI data" />
+            </div>
+            <div className="grid grid-cols-2 items-end gap-2 mt-2">
+              <div className="flex items-center gap-2">
+                <MedicalInput 
+                  label="Retention (days)" 
+                  type="number" 
+                  value={policies.retentionDays} 
+                  onChange={(v) => setPolicies(p => ({ ...p, retentionDays: Number(v) }))} 
+                />
+                <InfoTooltip content="How long to retain data and logs before automatic deletion" />
+              </div>
               <MedicalButton 
                 variant="subtle" 
                 onClick={() => applyPreset("healthcare", setAgent, setPolicies)} 
@@ -287,6 +334,9 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
           </MedicalCard>
 
           <MedicalCard title="Secrets Vault" icon={KeyRound}>
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip content="Securely store API keys and secrets. These are never exposed in prompts or logs and are injected at runtime as environment variables." />
+            </div>
             <MedicalInput 
               label="OPENAI_API_KEY" 
               placeholder="****" 
@@ -318,38 +368,56 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
             icon={Bot} 
             action={<MedicalButton variant="ghost" icon={Settings}>Config</MedicalButton>}
           >
+            <div className="flex items-center gap-2 mb-3">
+              <InfoTooltip content="Define your AI agent's core parameters including name, model selection, and intended purpose. These settings determine how your agent behaves and processes medical data." />
+            </div>
             <div className="grid md:grid-cols-3 gap-3">
-              <MedicalInput 
-                label="Agent name" 
-                value={agent.name} 
-                onChange={(v) => setAgent(a => ({ ...a, name: v }))} 
-              />
-              <MedicalSelect 
-                label="Model" 
-                value={agent.model} 
-                onChange={(v) => setAgent(a => ({ ...a, model: v }))} 
-                options={[
-                  { value: "gpt-4.1-mini", label: "GPT-4.1-mini" },
-                  { value: "claude-3.5", label: "Claude 3.5" }
-                ]} 
-              />
-              <MedicalInput 
-                label="Purpose" 
-                value={agent.purpose} 
-                onChange={(v) => setAgent(a => ({ ...a, purpose: v }))} 
-              />
-              <MedicalInput 
-                label="Max tokens" 
-                type="number" 
-                value={agent.maxTokens} 
-                onChange={(v) => setAgent(a => ({ ...a, maxTokens: Number(v) }))} 
-              />
-              <MedicalInput 
-                label="Temperature" 
-                type="number" 
-                value={agent.temperature} 
-                onChange={(v) => setAgent(a => ({ ...a, temperature: Number(v) }))} 
-              />
+              <div className="flex items-center gap-2">
+                <MedicalInput 
+                  label="Agent name" 
+                  value={agent.name} 
+                  onChange={(v) => setAgent(a => ({ ...a, name: v }))} 
+                />
+                <InfoTooltip content="Unique identifier for your AI agent deployment" />
+              </div>
+              <div className="flex items-center gap-2">
+                <MedicalSelect 
+                  label="Model" 
+                  value={agent.model} 
+                  onChange={(v) => setAgent(a => ({ ...a, model: v }))} 
+                  options={[
+                    { value: "gpt-4.1-mini", label: "GPT-4.1-mini" },
+                    { value: "claude-3.5", label: "Claude 3.5" }
+                  ]} 
+                />
+                <InfoTooltip content="Choose the underlying AI model for your agent - different models have different capabilities and costs" />
+              </div>
+              <div className="flex items-center gap-2">
+                <MedicalInput 
+                  label="Purpose" 
+                  value={agent.purpose} 
+                  onChange={(v) => setAgent(a => ({ ...a, purpose: v }))} 
+                />
+                <InfoTooltip content="Brief description of what this agent is designed to accomplish" />
+              </div>
+              <div className="flex items-center gap-2">
+                <MedicalInput 
+                  label="Max tokens" 
+                  type="number" 
+                  value={agent.maxTokens} 
+                  onChange={(v) => setAgent(a => ({ ...a, maxTokens: Number(v) }))} 
+                />
+                <InfoTooltip content="Maximum number of tokens the AI can generate in a single response - higher values allow longer responses but increase costs" />
+              </div>
+              <div className="flex items-center gap-2">
+                <MedicalInput 
+                  label="Temperature" 
+                  type="number" 
+                  value={agent.temperature} 
+                  onChange={(v) => setAgent(a => ({ ...a, temperature: Number(v) }))} 
+                />
+                <InfoTooltip content="Controls randomness in AI responses - lower values (0.1-0.3) for medical coding, higher values (0.7-1.0) for creative tasks" />
+              </div>
               <div className="flex flex-wrap gap-2">
                 <MedicalButton 
                   variant="subtle" 
@@ -378,13 +446,22 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
 
           {/* Toolbox & Prompts */}
           <MedicalCard title="Toolbox & Prompt Templates" icon={Settings}>
+            <div className="flex items-center gap-2 mb-3">
+              <InfoTooltip content="Configure the tools and prompt templates your AI agent has access to. Tools provide specific capabilities like medical code lookups, while templates standardize common workflows." />
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <div className="text-xs font-medium text-foreground mb-1">Tools</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-xs font-medium text-foreground">Tools</div>
+                  <InfoTooltip content="Specialized functions your AI agent can call to perform specific medical coding tasks" />
+                </div>
                 <ul className="space-y-2">
                   {tools.map((t, idx) => (
                     <li key={t.key} className="flex items-center justify-between text-sm">
-                      <span>{t.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{t.label}</span>
+                        <InfoTooltip content={getToolDescription(t.key)} />
+                      </div>
                       <MedicalToggle 
                         checked={t.enabled} 
                         onChange={(v) => setTools(ts => ts.map((x, i) => i === idx ? { ...x, enabled: v } : x))} 
@@ -394,7 +471,10 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
                 </ul>
               </div>
               <div>
-                <div className="text-xs font-medium text-foreground mb-1">Prompt templates</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-xs font-medium text-foreground">Prompt templates</div>
+                  <InfoTooltip content="Pre-defined prompts for common medical coding scenarios - customize these for your specific workflows" />
+                </div>
                 <div className="space-y-2">
                   {promptTemplates.map((p, i) => (
                     <div key={i} className="border rounded-xl p-2">
@@ -427,6 +507,9 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
 
           {/* Policy-as-Code */}
           <MedicalCard title="Policy-as-Code (CEL/Rego-style)" icon={Lock}>
+            <div className="flex items-center gap-2 mb-3">
+              <InfoTooltip content="Define custom security and compliance rules using policy-as-code. These rules are enforced at runtime to control agent behavior and data access." />
+            </div>
             <label className="block">
               <span className="text-xs font-medium text-foreground">Rules</span>
               <textarea 
@@ -448,6 +531,9 @@ deny_egress { input.env == "prod"; input.destination == "internet" }
 
           {/* API Surface */}
           <MedicalCard title="API Surface (REST)" icon={Globe}>
+            <div className="flex items-center gap-2 mb-3">
+              <InfoTooltip content="REST API endpoints for deploying and managing your AI agent. Use these for CI/CD integration and programmatic control." />
+            </div>
             <pre className="text-xs bg-secondary border border-border rounded-xl p-3 overflow-auto">
               {`POST /deploy
 GET /agents/:id/status
@@ -460,6 +546,9 @@ PATCH /agents/:id/policies`}
 
           {/* API & IaC */}
           <MedicalCard title="API & IaC (exportable)" icon={Globe}>
+            <div className="flex items-center gap-2 mb-3">
+              <InfoTooltip content="Export configuration as Infrastructure-as-Code (Terraform) or API documentation (OpenAPI) for version control and automated deployments." />
+            </div>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
                 <div className="font-medium">cURL (invoke agent)</div>
@@ -493,6 +582,9 @@ resource "panoptic_agent" "medcoder" {
 
           {/* Inline Tests */}
           <MedicalCard title="Inline Tests" icon={Eye}>
+            <div className="flex items-center gap-2 mb-3">
+              <InfoTooltip content="Automated tests that validate your agent configuration and ensure compliance policies are properly applied." />
+            </div>
             <ul className="text-sm space-y-1">
               {testResults.map((t, i) => (
                 <li key={i} className={t.ok ? "text-compliance-success" : "text-compliance-error"}>
